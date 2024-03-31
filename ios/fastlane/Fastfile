@@ -1,9 +1,52 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build ipa"
-  lane :build_ipa do
-    sh "flutter pub get"
-    sh "flutter build ipa --no-codesign"
+  before_all do
+    setup_ci if ENV['CI']
+    load_asc_api_token # Load the App Store Connect API token
+  end
+
+  desc "Load the App Store Connect API token"
+  lane :load_asc_api_token do
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_API_P8"],
+      is_key_content_base64: true,
+    )
+  end
+
+
+  desc "Release a new build to Apple Store"
+  lane :release_beta do
+    # Read api key from app_store_connect_api_key lane variable
+    api_key = lane_context[SharedValues::APP_STORE_CONNECT_API_KEY]
+    match(api_key: api_key, type: "appstore", force_for_new_devices:true)
+
+    # Build the archive using flutter build.
+    # Put here any additional steps that are needed before building the app here. 
+    # eg. running build_runner, setting dart define etc.
+    sh("pod --version")
+    sh("which pod")
+    sh("ruby --version")
+    sh("which ruby")
+    sh("fastlane --version")
+    sh("which fastlane")
+    Dir.chdir "../.." do
+     
+      sh("flutter", "clean")
+      sh("flutter", "pub", "get")
+      sh("flutter", "build", "ipa", "--release")
+    end
+
+    puts "*** Build and sign ipa for release ***"
+    build_app(
+      skip_build_archive: true,
+      archive_path: "../build/ios/archive/Runner.xcarchive",
+    )
+
+    # If you enable skip_waiting_for_build_processing, it will wait and update the declaration on appstore automatically on your behalf.
+    puts "*** Upload app to testflight ***"
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true) 
   end
 end

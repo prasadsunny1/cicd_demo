@@ -1,0 +1,4 @@
+git_url("https://github.com/prasadsunny1/cicd-demo-match-certs")
+storage_mode("git")
+username("prasadsunny1@icloud.com") # Your Apple Developer Portal username
+app_identifier("dev.prasadsunny1.cicdDemo") # The bundle identifier of your app
