@@ -1,38 +1,29 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
-
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
 default_platform(:android)
 
 platform :android do
-  desc "Runs all the tests"
-  lane :test do
-    gradle(task: "test")
+
+  desc "Build apk"
+  lane :build_apk do
+    sh "flutter pub get"
+    sh "flutter build apk --release"
   end
 
-  desc "Submit a new Beta Build to Crashlytics Beta"
-  lane :beta do
-    gradle(task: "clean assembleRelease")
-    crashlytics
-  
-    # sh "your_script.sh"
-    # You can also use other beta testing services here
+  desc "Build aab"
+  lane :build_aab do
+    sh "flutter pub get"
+    sh "flutter build appbundle --release"
   end
 
-  desc "Deploy a new version to the Google Play"
-  lane :deploy do
-    gradle(task: "clean assembleRelease")
-    upload_to_play_store
+  desc "Submit a new internal build to Google Play"
+  lane :upload_to_internal_track do
+    upload_to_play_store(
+      track: 'internal',
+      release_status: 'draft', # this is temporary because my app is not fully created on google play
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      json_key: "/Users/sanniprasad/Documents/CICD\ workshop\ files/playstore-api-5686676658611279098-871674-865ef056a479.json",
+      )
   end
 end
